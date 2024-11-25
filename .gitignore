@@ -140,3 +140,7 @@ dmypy.json
 # 自己的文件
 pic/
 reports/
+data/
+
+# 其他
+

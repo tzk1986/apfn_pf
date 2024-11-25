@@ -5,8 +5,10 @@ from tools.loader import read_csv_file
 
 
 class QuickstartUser(HttpUser) :
-    
+    # 被测系统的host
     host = 'http://10.50.11.120:9001'
+    # 报告生成路径
+    html = './reports/index.html'
     
     # wait_time = between(1, 5)
     wait_time = constant_throughput(50)
