@@ -7,7 +7,7 @@ class PayUser(HttpUser):
     """支付用户类,用于模拟用户支付行为"""
     host = "http://10.50.11.120:9001"
     # 设置请求间隔为1-3秒,模拟真实用户操作间隔
-    # wait_time = between(1, 3)
+    wait_time = between(1, 3)
     
     # def on_start(self):
     #     """
@@ -56,7 +56,8 @@ class PayUser(HttpUser):
             name="充值接口"
         ) as response:
             # 判断请求是否成功
-            if response.status_code == 200:
+            # print(response.json())
+            if response.json()['message'] == "调用成功":
                 response.success()  # 标记为成功
             else:
                 response.failure(f"支付失败: {response.text}")  # 标记为失败并记录错误信息
