@@ -1,9 +1,21 @@
 # 导入所需的库
-from locust import HttpUser, LoadTestShape, task, between  # 导入locust相关类和装饰器
+from locust import HttpUser, LoadTestShape, task, between
+import requests  # 导入locust相关类和装饰器
 from tools.data_factory import get_register_data  # 导入生成测试数据的工具函数
 import random  # 导入随机数模块
-import requests
+from tools.loader import read_csv_file
+import queue
 
+
+# 从CSV文件中读取测试数据
+data_list = read_csv_file("./data/20241126.csv")
+# 创建一个队列用于存储测试数据
+q = queue.Queue()
+# 遍历数据列表,将每条数据放入队列中
+for data in data_list:
+    q.put(data)
+    
+    
 def get_login_token():
     """获取登录token的函数"""
     login_url = "http://10.50.11.120:9001/api/login"  # 替换为实际登录地址
@@ -27,6 +39,7 @@ def get_login_token():
 
 # 在启动时获取token
 TOKEN = get_login_token()
+
 
 class PayUser(HttpUser):
     """支付用户类,用于模拟用户支付行为"""
@@ -53,24 +66,26 @@ class PayUser(HttpUser):
         发送POST请求到支付接口,携带用户信息和支付信息
         """
         # 构建支付请求的数据负载
-        payload = {
-                    "remark": None,
-                    "orderAmount": "1",
-                    "accountType": 1,
-                    "accountBalanceId": "4619d6b21e244c8db26d0e6d0439966c",
-                    "merchantId": "2021040701",
-                    "userId": "USERg100956702",
-                    "welfareId": None,
-                    "requireAmount": "1",
-                    "actualAmount": 1,
-                    "discountAmount": 0,
-                    "welfareAmount": 0,
-                    "channelTypeList": None,
-                    "merchantName": "上海艾佩菲宁",
-                    "phoneNumber": "15900506254",
-                    "nickName": "微信用户"
-                 }
-        headers = {"Token": "8E3230CD241D57A0EF238B47517578DB"}
+        # payload = {
+        #             "remark": None,
+        #             "orderAmount": "1",
+        #             "accountType": 1,
+        #             "accountBalanceId": "4619d6b21e244c8db26d0e6d0439966c",
+        #             "merchantId": "2021040701",
+        #             "userId": "USERg100956702",
+        #             "welfareId": None,
+        #             "requireAmount": "1",
+        #             "actualAmount": 1,
+        #             "discountAmount": 0,
+        #             "welfareAmount": 0,
+        #             "channelTypeList": None,
+        #             "merchantName": "上海艾佩菲宁",
+        #             "phoneNumber": "15900506254",
+        #             "nickName": "微信用户"
+        #          }
+        payload = q.get()
+        # print(payload)
+        headers = {"Token": "1E29063B7B1B024CF6831FB9EC736A3E"}
         # headers = {"Token": TOKEN}
         
         # 发送POST请求到支付接口
@@ -87,6 +102,7 @@ class PayUser(HttpUser):
                 response.success()  # 标记为成功
             else:
                 response.failure(f"支付失败: {response.text}")  # 标记为失败并记录错误信息
+        q.put(payload)
                 
 # 自定义用户增量曲线
 # class StagesShapeWithCustomUsers(LoadTestShape):
