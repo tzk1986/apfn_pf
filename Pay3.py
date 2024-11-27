@@ -6,9 +6,10 @@ import random  # 导入随机数模块
 from tools.loader import read_csv_file
 import queue
 from tools.csvreader_cn import CSVDictReader
+from locust_plugins import constant_total_ips
 
 
-# 从CSV文件中读取测试数据
+# 使用生成器读取CSV文件，不用再用queue队列，内存效率更高
 data_list = CSVDictReader("./data/20241126.csv")
 
 
@@ -43,7 +44,9 @@ class PayUser(HttpUser):
     """支付用户类,用于模拟用户支付行为"""
     host = "http://10.50.11.120:9001"
     # 设置请求间隔为1-3秒,模拟真实用户操作间隔
-    # wait_time = between(1, 3)
+    # 设置固定的总请求速率为每秒2次请求，如果task中请求只有一个，那么RPS=IPS，
+    # 如果task中请求有多个，那么RPS=IPS*请求个数
+    wait_time = constant_total_ips(10)
     
     # def on_start(self):
     #     """
@@ -82,7 +85,7 @@ class PayUser(HttpUser):
         #             "nickName": "微信用户"
         #          }
         payload = next(data_list)
-        print(payload)
+        # print(payload)
         headers = {"Token": "1E29063B7B1B024CF6831FB9EC736A3E"}
         # headers = {"Token": TOKEN}
         
