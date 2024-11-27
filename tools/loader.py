@@ -2,7 +2,7 @@ import csv
 from typing import Text
 
 
-def read_csv_file(csv_file: Text):
+def read_csv_file(csv_file: Text)->list:
     """
     读取CSV文件并将其转换为列表，保持原始数据类型
 

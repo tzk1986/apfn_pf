@@ -5,15 +5,13 @@ from tools.data_factory import get_register_data  # 导入生成测试数据的�
 import random  # 导入随机数模块
 from tools.loader import read_csv_file
 import queue
+from tools.csvreader_cn import CSVDictReader
 
 
 # 从CSV文件中读取测试数据
-data_list = read_csv_file("./data/20241126.csv")
-# 创建一个队列用于存储测试数据
-q = queue.Queue()
-# 遍历数据列表,将每条数据放入队列中
-for data in data_list:
-    q.put(data)
+data_list = CSVDictReader("./data/20241126.csv")
+
+
     
     
 # def get_login_token():
@@ -83,8 +81,8 @@ class PayUser(HttpUser):
         #             "phoneNumber": "15900506254",
         #             "nickName": "微信用户"
         #          }
-        payload = q.get()
-        # print(payload)
+        payload = next(data_list)
+        print(payload)
         headers = {"Token": "1E29063B7B1B024CF6831FB9EC736A3E"}
         # headers = {"Token": TOKEN}
         
@@ -102,7 +100,7 @@ class PayUser(HttpUser):
                 response.success()  # 标记为成功
             else:
                 response.failure(f"支付失败: {response.text}")  # 标记为失败并记录错误信息
-        q.put(payload)
+
                 
 # 自定义用户增量曲线
 # class StagesShapeWithCustomUsers(LoadTestShape):
