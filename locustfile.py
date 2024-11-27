@@ -1,5 +1,5 @@
 import time
-from locust import HttpUser, LoadTestShape, constant, constant_pacing, constant_throughput, task, between
+from locust import FastHttpUser, HttpUser, LoadTestShape, constant, constant_pacing, constant_throughput, task, between
 import queue
 from tools.loader import read_csv_file
 from tools.data_factory import get_register_data
@@ -47,7 +47,7 @@ class QuickstartUser(HttpUser) :
                 "pageSize": 10,
                 "sysId": "iom",
             },
-            headers={"Token": "8E3230CD241D57A0EF238B47517578DB"},
+            headers={"Token": "1E29063B7B1B024CF6831FB9EC736A3E"},
             name="会员-人脸列表",
             catch_response=True,
         ) as res:
@@ -55,7 +55,7 @@ class QuickstartUser(HttpUser) :
             if res.status_code == 200:
                 res.success()
             else:
-                res.failure("请求失败")
+                res.failure(f"查询失败: {res.text}")
 
         # try: # 手动断言
         #     assert self.q.qsize() > 0
