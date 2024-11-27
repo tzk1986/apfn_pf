@@ -46,7 +46,7 @@ class PayUser(HttpUser):
     # 设置请求间隔为1-3秒,模拟真实用户操作间隔
     # 设置固定的总请求速率为每秒2次请求，如果task中请求只有一个，那么RPS=IPS，
     # 如果task中请求有多个，那么RPS=IPS*请求个数
-    wait_time = constant_total_ips(10)
+    wait_time = constant_total_ips(100)
     
     # def on_start(self):
     #     """
