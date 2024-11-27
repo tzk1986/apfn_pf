@@ -143,4 +143,5 @@ reports/
 data/
 
 # 其他
+.vscode/
 
