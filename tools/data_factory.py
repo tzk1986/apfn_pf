@@ -5,7 +5,7 @@ from mimesis import Address
 import random
 
 
-def get_register_data(x:int=1):
+def get_register_data(x:int=1)->list:
     """
     使用mimesis生成注册数据
     
