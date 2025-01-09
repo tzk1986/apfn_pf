@@ -1,3 +1,4 @@
+import csv
 import logging
 from locust import HttpUser, LoadTestShape, task, between
 from datetime import datetime
@@ -30,9 +31,10 @@ def incrementer(start=0):
         current += 1  # 自增r
 
 # 生成自增的迭代器
-incrementer_gen = incrementer(442861)
+incrementer_gen = incrementer(610319)
+incrementer_gen2 = incrementer(610319)
 
-# 记录上次使用到哪个编号442860
+# 记录上次使用到哪个编号 593316
 
 # 如果需要增加用户，只需要在csv文件中增加就行
 data = CSVReader("./data/buyerPid_ol.csv")
@@ -45,9 +47,9 @@ total_bandwidth = 0
 class PayUser(HttpUser):
     """支付用户类,用于模拟用户支付行为"""
     host = "https://dsp.lgdefu.com/ups"
-    wait_time = constant_total_ips(400)  # 设置固定的总请求速率为每秒200次请求
+    # wait_time = constant_total_ips(400)  # 设置固定的总请求速率为每秒200次请求
 
-    @task
+    @task(10)
     def pay_order(self):
         global total_bandwidth
         """
@@ -99,6 +101,10 @@ class PayUser(HttpUser):
             if response.json()['errCode'] == 0:
                 response.success()  # 标记为成功
                 # logging.info(f"支付成功: buyerPid:{buyerPid} requestId:{current_requestId}")
+                # 将 current_requestId 存储到 xxx.csv 文件中
+                with open('./data/xxxol.csv', mode='a', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow([current_requestId])
             else:
                 response.failure(f"支付失败: buyerPid:{buyerPid} {response.text}")  # 标记为失败并记录错误信息
                 if LOGGING_ENABLED:
@@ -108,3 +114,46 @@ class PayUser(HttpUser):
             if LOGGING_ENABLED:
                 bandwidth_mb_s = total_bandwidth / (1024 * 1024)  # Convert to MB/s
                 logging.info(f"请求大小: {request_size} bytes, 响应大小: {response_size} bytes, 总大小: {total_size} bytes, 总带宽使用量: {bandwidth_mb_s:.2f} MB/s")
+
+    @task(1)   
+    def refund(self):
+        """
+        模拟退款请求
+        """
+        # 从 xxx.csv 文件中读取 current_requestId
+        with open('./data/xxxol.csv', mode='r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+            if rows:
+                pay_requestId = rows[0][0]  # 读取第一个请求ID
+                # 删除已使用的数据
+                with open('./data/xxxol.csv', mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerows(rows[1:])
+            else:
+                logging.error("没有找到支付请求ID，无法进行退款")
+                return
+
+        querystring = {"scene":"MULTI"}
+        refund_requestId = f"M_REFUND_ID_{next(incrementer_gen2):03d}"
+        payload = {
+            "payRequestId": pay_requestId,
+            "requestId": refund_requestId,
+            "orderAmount": 0.01
+        }
+        headers = {
+            "tenantId": "6415488620d6846f3836db032815f6a5",
+            "Content-Type": "application/json"
+        }
+
+        # 发送POST请求到退款接口
+        with self.client.post("/capi/unified/refund", json=payload, headers=headers, params=querystring, catch_response=True, name="退款接口") as response:
+            if response.json()['errCode'] == 0:
+                response.success()  # 标记为成功
+                if LOGGING_ENABLED:
+                    logging.info(f"退款成功: payRequestId:{payload['payRequestId']} requestId:{payload['requestId']}")
+            else:
+                response.failure(f"退款失败:{response.text}")  # 标记为失败并记录错误信息
+                if LOGGING_ENABLED:
+                    logging.error(f"退款失败: payRequestId:{payload['payRequestId']} {response.text}")
+            logging.info(response.text)
