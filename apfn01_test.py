@@ -1,24 +1,19 @@
-# 导入所需的库
 import json
-import logging
-from locust import HttpUser, LoadTestShape, task, between
-from datetime import datetime
-import requests  # 导入locust相关类和装饰器
-from tools.data_factory import get_register_data  # 导入生成测试数据的工具函数
-import random  # 导入随机数模块
-from tools.loader import read_csv_file
-import queue
-from tools.csvreader_cn import CSVDictReader,CSVReader
+import logging  # Add logging module
+from locust import HttpUser, LoadTestShape, task, between, TaskSet
+from tools.csvreader_cn import CSVDictReader, CSVReader
 from locust_plugins import constant_total_ips
+from datetime import datetime
 import time
 
+# Logging configuration
+log_file_path = './data/test_log.log'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', handlers=[logging.FileHandler(log_file_path)])
 
-# 配置日志
-logging.basicConfig(
-    filename='./data/pay_order.log',  # 日志文件路径
-    level=logging.INFO,            # 日志级别
-    format='%(asctime)s - %(levelname)s - %(message)s'  # 日志格式
-)
+
+log_print_content = True  # Switch to enable/disable logging of printed content
+log_bandwidth_usage = True  # Switch to enable/disable logging of bandwidth usage
+
 
 def incrementer(start=0):
     """
@@ -32,28 +27,35 @@ def incrementer(start=0):
         current += 1  # 自增r
         
 # 生成自增的迭代器
-incrementer_gen = incrementer(35930)
+incrementer_gen = incrementer(34325)
 
-# 记录上次使用到哪个编号35929
+# 记录上次使用到哪个编号34324
 
 # 如果需要增加用户，只需要在csv文件中增加就行
 data = CSVReader("./data/buyerPid.csv")
 
-# list1 = ["24121000001","24121000003","24121000004","24121300001","24121100001"]
-# q = queue.Queue()
-# for data in list1:
-#     q.put(data)
+class StepLoadShape(LoadTestShape):
+    """
+    A step load shape that adds users at a fixed interval.
+    起始用户数量为10，每五分钟增加10个用户，持续15分钟
+    """
 
+    step_time = 300  # Time between steps (in seconds)
+    step_load = 1   # Users to add at each step
+    spawn_rate = 1 # Users to spawn per second
+    time_limit = 60  # Total test duration (in seconds)
 
-class PayUser(HttpUser):
-    """支付用户类,用于模拟用户支付行为"""
-    host = "http://10.50.11.75:11000"
-    # host = "https://dsp.lgdefu.com/ups"
-    # 设置请求间隔为1-3秒,模拟真实用户操作间隔
-    # 设置固定的总请求速率为每秒2次请求，如果task中请求只有一个，那么RPS=IPS，
-    # 如果task中请求有多个，那么RPS=IPS*请求个数
-    # wait_time = constant_total_ips(30)
+    def tick(self):
+        run_time = self.get_run_time()
 
+        if run_time > self.time_limit:
+            return None
+
+        current_step = run_time // self.step_time
+        return (10 + current_step * self.step_load, self.spawn_rate)
+
+# Add this shape to your Locust test
+class UserBehavior(TaskSet):
     @task
     def pay_order(self):
         """
@@ -74,8 +76,10 @@ class PayUser(HttpUser):
         # payload = next(data_list)
         current_time = datetime.now()
         formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        print(f"{formatted_time}：用户{buyerPid}编号{current_requestId}")
-        logging.info(f"{formatted_time}：用户{buyerPid}编号{current_requestId}")
+        log_message = f"{formatted_time}：用户{buyerPid}编号{current_requestId}"
+        print(log_message)
+        if log_print_content:
+            logging.info(log_message)
         headers = {
             "tenantId": "8a8b88e2718b20b1b6e19b2b0414a1ea",
             "User-Agent": "Apifox/1.0.0 (https://apifox.com)",
@@ -108,30 +112,14 @@ class PayUser(HttpUser):
             total_size = request_size + response_size
             duration = end_time - start_time
             bandwidth = total_size / duration
-            print(f"Request size: {request_size} bytes, Response size: {response_size} bytes, Total size: {total_size} bytes, Duration: {duration} seconds, Bandwidth: {bandwidth} bytes/second")
-            logging.info(f"Request size: {request_size} bytes, Response size: {response_size} bytes, Total size: {total_size} bytes, Duration: {duration} seconds, Bandwidth: {bandwidth} bytes/second")
-        # q.put(buyerPid)
-        
-        
-    def refund(self):
-        """
-        模拟退款请求
-        """
-        url = "http://10.50.11.75:11000/capi/unified/refund"
+            bandwidth_mb_s = bandwidth / (1024 * 1024)  # Convert to MB/s
+            bandwidth_message = f"Request size: {request_size} bytes, Response size: {response_size} bytes, Total size: {total_size} bytes, Duration: {duration} seconds, Bandwidth: {bandwidth_mb_s:.2f} MB/s"
+            print(bandwidth_message)
+            if log_bandwidth_usage:
+                logging.info(bandwidth_message)
 
-        querystring = {"scene":"MULTI"}
-
-        payload = {
-            "payRequestId": "MULTI_090",
-            "requestId": "M_REFUND_ID_041",
-            "orderAmount": 2.24
-        }
-        headers = {
-            "tenantId": "8a8b88e2718b20b1b6e19b2b0414a1ea",
-            "Content-Type": "application/json"
-        }
-
-        response = requests.request("POST", url, json=payload, headers=headers, params=querystring)
-
-        print(response.text)
-        pass
+class WebsiteUser(HttpUser):
+    host = "http://10.50.11.75:11000"
+    tasks = [UserBehavior]
+    wait_time = between(1, 5)
+    load_shape = StepLoadShape
