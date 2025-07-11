@@ -1,5 +1,13 @@
 import time
-from locust import FastHttpUser, LoadTestShape, constant, constant_pacing, constant_throughput, task, between
+from locust import (
+    FastHttpUser,
+    LoadTestShape,
+    constant,
+    constant_pacing,
+    constant_throughput,
+    task,
+    between,
+)
 import queue
 from tools.loader import read_csv_file
 from tools.data_factory import get_register_data
@@ -7,13 +15,13 @@ from tools.data_factory import get_register_data
 
 class QuickstartUser(FastHttpUser):
     # 被测系统的host
-    host = 'http://10.50.11.120:9001'
+    host = "http://10.50.11.120:9001"
     # 报告生成路径
-    html = './reports/index.html'
-    
+    html = "./reports/index.html"
+
     # 设置并发用户等待时间为0-1秒
     # wait_time = between(0, 1)
-    
+
     # 混合场景用到
     # wait_time = constant_throughput(100) # 提高每秒请求数上限
     # wait_time = constant_pacing(0.5) # 缩短固定等待时间
@@ -28,12 +36,12 @@ class QuickstartUser(FastHttpUser):
     #     for i in csv_list:
     #         self.q.put(i)  # 将数据添加到队列中
 
-    @task(3) # 增加任务权重
+    @task(3)  # 增加任务权重
     def hello_world(self):
         with self.client.post(
             "/api/query/userInfos",
             json={
-                "userBackStatus": "0", 
+                "userBackStatus": "0",
                 "phoneNumber": "",
                 "nickName": "",
                 "memberCard": "",
@@ -75,7 +83,11 @@ class StagesShapeWithCustomUsers(LoadTestShape):
         for stage in self.stages:
             if run_time < stage["duration"]:
                 try:
-                    tick_data = (stage["users"], stage["spawn_rate"], stage["user_classes"])
+                    tick_data = (
+                        stage["users"],
+                        stage["spawn_rate"],
+                        stage["user_classes"],
+                    )
                 except:
                     tick_data = (stage["users"], stage["spawn_rate"])
                 return tick_data

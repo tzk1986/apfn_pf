@@ -31,8 +31,8 @@ def incrementer(start=0):
         current += 1  # 自增r
 
 # 生成自增的迭代器
-incrementer_gen = incrementer(610319)
-incrementer_gen2 = incrementer(610319)
+incrementer_gen = incrementer(681590)
+incrementer_gen2 = incrementer(688436)
 
 # 记录上次使用到哪个编号 593316
 
@@ -49,7 +49,7 @@ class PayUser(HttpUser):
     host = "https://dsp.lgdefu.com/ups"
     # wait_time = constant_total_ips(400)  # 设置固定的总请求速率为每秒200次请求
 
-    @task(10)
+    # @task(10)
     def pay_order(self):
         global total_bandwidth
         """

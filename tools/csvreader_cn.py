@@ -37,15 +37,14 @@
 #         try:
 #             return next(self.reader)
 #         except StopIteration:
-#             # reuse file on EOF 
+#             # reuse file on EOF
 #             self.file.seek(0, 0)
 #             next(self.reader)  # skip header line
 #             return next(self.reader)
 #             # raise # 注释上面两行代码，不循环读取文件，直接结束
 
 
-
-'''
+"""
 优化
 1.文件打开方式:
 
@@ -59,16 +58,17 @@ CSVReader 和 CSVDictReader 中的文件打开和异常处理逻辑有重复，�
 4.改进重置逻辑:
 
 在 __next__ 方法中，可以考虑使用一个标志来指示是否需要跳过表头，而不是总是跳过。
-'''
+"""
 import csv
 from typing import Iterator, Dict
+
 
 class BaseCSVReader(Iterator):
     "Base class for CSV readers"
 
     def __init__(self, file, **kwargs):
         if isinstance(file, str):
-            self.file = open(file, encoding='utf-8')
+            self.file = open(file, encoding="utf-8")
         else:
             self.file = file
         self.reader = None
@@ -78,6 +78,7 @@ class BaseCSVReader(Iterator):
 
     def close(self):
         self.file.close()
+
 
 class CSVReader(BaseCSVReader):
     "Read test data from csv file using an iterator"
@@ -92,6 +93,7 @@ class CSVReader(BaseCSVReader):
         except StopIteration:
             self.reset()
             return next(self.reader)
+
 
 class CSVDictReader(BaseCSVReader):
     "Read test data from csv file using an iterator, returns rows as dicts"
