@@ -1,5 +1,6 @@
 from locust import HttpUser, LoadTestShape, task, between, TaskSet
 
+
 class StepLoadShape(LoadTestShape):
     """
     A step load shape that adds users at a fixed interval.
@@ -7,8 +8,8 @@ class StepLoadShape(LoadTestShape):
     """
 
     step_time = 3600  # Time between steps (in seconds)
-    step_load = 10    # Users to add at each step
-    spawn_rate = 10   # Users to spawn per second
+    step_load = 10  # Users to add at each step
+    spawn_rate = 10  # Users to spawn per second
     time_limit = 18000  # Total test duration (in seconds)
 
     def tick(self):
@@ -20,12 +21,14 @@ class StepLoadShape(LoadTestShape):
         current_step = run_time // self.step_time
         return (20 + current_step * self.step_load, self.spawn_rate)
 
+
 # Add this shape to your Locust test
 class UserBehavior(TaskSet):
     @task
     def pay_order(self):
         # ...existing code...
         pass
+
 
 class WebsiteUser(HttpUser):
     tasks = [UserBehavior]
