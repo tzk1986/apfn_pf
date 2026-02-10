@@ -21,13 +21,13 @@ def generate_test_data(filename, count=100, start_index=1):
         for i in range(start_index, start_index + count):
             nickname = fake.name()
             mobile = ''
-            job_id = f"zxsh{i:07d}"
-            department = '测试部'
-            position = '测试人员'
+            job_id = f"zfcs{i:07d}"
+            department = '产品部7'
+            position = '产品'
             writer.writerow([nickname, mobile, job_id, department, position])
 
 if __name__ == '__main__':
     # 例如已生成100条，下次从101开始
-    generate_test_data('./data/test_users092206.csv', count=5600, start_index=1)
+    generate_test_data('./data/test_users1226001.csv', count=100, start_index=1)
         
 
