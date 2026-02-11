@@ -56,8 +56,8 @@ card_number_iterator = itertools.cycle(card_numbers) if card_numbers else iterto
 # 加载档口菜品数据并创建无限循环迭代器
 store_food_data = load_store_food_data("./data/store_food_data.csv")
 store_food_iterator = itertools.cycle(store_food_data) if store_food_data else itertools.cycle([{
-    'storeId': '9ddc9145f0c44fcc8bb69b2b3fb30a6a',
-    'storeName': '档口A',
+    'storeId': 'caba1b515c1b43739cf85573576b9d91',
+    'storeName': 'SO2 稻之乡自选',
     'foodId': '412bb78f12774eb8be931ac97df4ec7b',
     'foodName': '辣椒炒肉',
     'price': '0.50',
